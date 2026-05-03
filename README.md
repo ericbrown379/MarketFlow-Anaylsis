@@ -244,3 +244,29 @@ Notes:
 - For a true streaming EMA you need to maintain previous EMA state per key — use stateful processing (mapGroupsWithState) or store the last EMA externally and use it when computing the next value.
 - Choose α (smoothing factor) according to how quickly you want the EMA to react (larger α = more weight on recent prices).
 
+---
+
+## 📊 Volatility (rolling standard deviation)
+
+Volatility measures how much a price fluctuates over time. High volatility indicates large, frequent price swings (riskier / less predictable). Low volatility indicates more stable prices.
+
+One common measure is the standard deviation (σ) of prices over a window of n observations:
+
+σ = sqrt( (1/n) * sum_{i=1..n} (x_i - μ)^2 )
+
+In PySpark we compute a rolling volatility per coin using a windowed stddev over the last k rows (e.g., 5):
+
+```python
+from pyspark.sql.window import Window
+from pyspark.sql.functions import stddev, col
+
+coin_window = Window.partitionBy('id').orderBy('ingestion_time').rowsBetween(-4, 0)
+df = df.withColumn('volatility_5', stddev(col('price')).over(coin_window))
+```
+
+Notes:
+- Like the SMA, rowsBetween(-4, 0) uses the current row and the previous 4 rows (total 5) per coin.
+- The result will be NULL until enough history exists for the window.
+- For time-aware volatility with late-arriving data, use time windows and watermarking rather than purely row-based windows.
+
+
