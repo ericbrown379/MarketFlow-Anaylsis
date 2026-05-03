@@ -171,3 +171,30 @@ Track tasks, sprints, and issues on the project Kanban board:
 
 [KAN Project Board (Jira)](https://ericbrown379.atlassian.net/jira/software/projects/KAN/boards/1?atlOrigin=eyJpIjoiMjM4OTNjMWNlMzAyNDk2Yzg1NDQ5ZDk3YzRjNWJjM2UiLCJwIjoiaiJ9)
 
+
+---
+
+## 📊 How SMA (Simple Moving Average) is calculated
+
+Simple Moving Average (SMA) over a window of size k is the arithmetic mean of the last k prices:
+
+SMA_k = (1 / k) * sum_{i=n-k+1..n} p_i
+
+Example (k = 3): prices = [100, 105, 110]
+
+SMA_3 = (100 + 105 + 110) / 3 = 315 / 3 = 105
+
+In this project we compute the SMA per coin using a row-based window over the last k rows (micro-batch aware). In PySpark you can compute a 5-period SMA per coin with something like:
+
+```python
+from pyspark.sql.window import Window
+from pyspark.sql.functions import avg, col
+
+coin_window = Window.partitionBy('id').orderBy('ingestion_time').rowsBetween(-4, 0)
+df = df.withColumn('SMA_5', avg(col('price')).over(coin_window))
+```
+
+Notes:
+- rowsBetween(-4, 0) takes the current row and the previous 4 rows (total 5) per coin.
+- Use a timestamp-based window or watermark for time-aware aggregations when late data is expected.
+
