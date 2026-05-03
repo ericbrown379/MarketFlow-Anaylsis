@@ -1,4 +1,4 @@
-(# 📊 Market Flow Analysis)
+# 📊 Market Flow Analysis
 
 ## 🧠 Overview
 
@@ -162,4 +162,12 @@ This README is strong enough to:
 • Put on your resume
 • Talk through in interviews
 • Show system design thinking
+
+---
+
+## 📋 Project board
+
+Track tasks, sprints, and issues on the project Kanban board:
+
+[KAN Project Board (Jira)](https://ericbrown379.atlassian.net/jira/software/projects/KAN/boards/1?atlOrigin=eyJpIjoiMjM4OTNjMWNlMzAyNDk2Yzg1NDQ5ZDk3YzRjNWJjM2UiLCJwIjoiaiJ9)
 
