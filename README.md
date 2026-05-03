@@ -198,3 +198,49 @@ Notes:
 - rowsBetween(-4, 0) takes the current row and the previous 4 rows (total 5) per coin.
 - Use a timestamp-based window or watermark for time-aware aggregations when late data is expected.
 
+
+---
+
+## 📊 How EMA (Exponential Moving Average) is calculated
+
+The Exponential Moving Average (EMA) gives more weight to recent prices. The true EMA is recursive:
+
+EMA_t = α * p_t + (1 - α) * EMA_{t-1}
+
+where α is the smoothing factor (0 < α ≤ 1). This requires keeping the previous EMA value (stateful / recursive).
+
+Practical shortcut (streaming-friendly): approximate an EMA with a small weighted rolling window (e.g., 3 points), giving higher weight to the most recent value. This is not a true EMA, but is simple and often effective for short windows.
+
+Example (3-point weighted shortcut): current price = p_t, previous prices p_{t-1}, p_{t-2} with weights [0.6, 0.3, 0.1]:
+
+EMA_3_approx = (0.6 * p_t + 0.3 * p_{t-1} + 0.1 * p_{t-2}) / (0.6 + 0.3 + 0.1)
+
+PySpark (approximate 3-point EMA using lag in a window):
+
+```python
+from pyspark.sql.window import Window
+from pyspark.sql.functions import lag, col
+
+coin_window = Window.partitionBy('id').orderBy('ingestion_time')
+
+# create lag columns for previous 1 and 2 prices
+df = df.withColumn('p0', col('price')) \
+      .withColumn('p1', lag('price', 1).over(coin_window)) \
+      .withColumn('p2', lag('price', 2).over(coin_window))
+
+# weighted combination (handles nulls by leaving EMA null until enough history exists)
+df = df.withColumn('EMA_3_approx', (
+   col('p0') * 0.6 + col('p1') * 0.3 + col('p2') * 0.1
+))
+
+# if you want to normalize by total weights (useful when some lags are null):
+df = df.withColumn('EMA_3_approx', (
+   (col('p0') * 0.6 + col('p1') * 0.3 + col('p2') * 0.1) / (0.6 + 0.3 + 0.1)
+))
+```
+
+Notes:
+- The snippet above is a practical shortcut and not a mathematically exact EMA.
+- For a true streaming EMA you need to maintain previous EMA state per key — use stateful processing (mapGroupsWithState) or store the last EMA externally and use it when computing the next value.
+- Choose α (smoothing factor) according to how quickly you want the EMA to react (larger α = more weight on recent prices).
+
