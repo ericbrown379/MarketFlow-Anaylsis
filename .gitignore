@@ -4,3 +4,25 @@ __pycache__/
 .env
 checkpoints/
 dataframes/
+
+# macOS
+.DS_Store
+
+# IDEs/editors
+.vscode/
+.idea/
+
+# Python test / coverage
+.pytest_cache/
+.coverage
+
+# Logs and runtime files
+*.log
+*.sqlite3
+
+# Local virtualenvs
+.venv/
+
+# Don't commit large JDBC driver jars - download on demand
+/spark_streaming/postgresql-*.jar
+dataframes/
